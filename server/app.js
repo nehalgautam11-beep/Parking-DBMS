@@ -3,10 +3,6 @@ const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
 
-connectDB().catch((error) => {
-    console.error(`MongoDB Error: ${error.message}`);
-});
-
 const app = express();
 
 const allowedOrigins = [
@@ -26,6 +22,16 @@ app.use(cors({
     credentials: true
 }));
 app.use(express.json());
+
+// Ensure DB is connected for each request in serverless runtime.
+app.use(async (req, res, next) => {
+    try {
+        await connectDB();
+        next();
+    } catch (error) {
+        res.status(500).json({ message: `Database connection failed: ${error.message}` });
+    }
+});
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
