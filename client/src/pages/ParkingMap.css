@@ -1,0 +1,109 @@
+/* ── Parking Map Page ── */
+.map-page-header {
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+    padding: 40px 0 32px;
+}
+
+.map-page-header h1 {
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 6px;
+}
+
+.map-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding: 16px 20px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+}
+
+.map-legend span {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.ml {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
+}
+
+.ml-a {
+    background: #eef2ff;
+    border: 1.5px solid #4f46e5;
+}
+
+.ml-b {
+    background: #ecfdf5;
+    border: 1.5px solid #059669;
+}
+
+.ml-c {
+    background: #fffbeb;
+    border: 1.5px solid #d97706;
+}
+
+.ml-road {
+    background: #f1f5f9;
+}
+
+.ml-building {
+    background: #e2e8f0;
+}
+
+.map-card {
+    padding: 0;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+}
+
+.campus-map {
+    width: 100%;
+    height: auto;
+    display: block;
+    background: #fff;
+}
+
+.zone-info-card {
+    text-align: center;
+    transition: transform 0.2s;
+}
+
+.zone-info-card:hover {
+    transform: translateY(-4px);
+}
+
+.zone-icon {
+    font-size: 32px;
+    margin-bottom: 12px;
+}
+
+.zone-info-card h3 {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.zone-info-card p {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+.zone-slots {
+    font-family: var(--font-heading);
+    font-size: 20px;
+    font-weight: 800;
+    margin-top: 10px;
+}
