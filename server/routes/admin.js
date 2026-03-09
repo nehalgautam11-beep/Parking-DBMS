@@ -5,6 +5,7 @@ const Booking = require('../models/Booking');
 const User = require('../models/User');
 const ParkingSlot = require('../models/ParkingSlot');
 const ParkingArea = require('../models/ParkingArea');
+const demoStore = require('../lib/demoStore');
 const router = express.Router();
 
 // All admin routes require auth + admin role
@@ -13,6 +14,10 @@ router.use(protect, adminOnly);
 // GET /api/admin/bookings
 router.get('/bookings', async (req, res) => {
     try {
+        if (req.demoMode) {
+            return res.json(demoStore.listAdminBookings());
+        }
+
         const bookings = await Booking.find()
             .populate('user', 'name email')
             .populate('slot', 'slotNumber')
@@ -27,6 +32,10 @@ router.get('/bookings', async (req, res) => {
 // GET /api/admin/users
 router.get('/users', async (req, res) => {
     try {
+        if (req.demoMode) {
+            return res.json(demoStore.listAdminUsers());
+        }
+
         const users = await User.find().select('-password').sort('-createdAt');
         res.json(users);
     } catch (err) {
@@ -38,6 +47,13 @@ router.get('/users', async (req, res) => {
 router.post('/slots', async (req, res) => {
     try {
         const { areaId, slotNumber } = req.body;
+
+        if (req.demoMode) {
+            const result = demoStore.addSlot({ areaId, slotNumber });
+            if (result.code !== 201) return res.status(result.code).json({ message: result.message });
+            return res.status(201).json(result.slot);
+        }
+
         const area = await ParkingArea.findById(areaId);
         if (!area) return res.status(404).json({ message: 'Parking area not found.' });
         const slot = await ParkingSlot.create({ area: areaId, slotNumber });
@@ -51,6 +67,11 @@ router.post('/slots', async (req, res) => {
 // DELETE /api/admin/slots/:id
 router.delete('/slots/:id', async (req, res) => {
     try {
+        if (req.demoMode) {
+            const result = demoStore.removeSlot(req.params.id);
+            return res.status(result.code).json({ message: result.message });
+        }
+
         const slot = await ParkingSlot.findById(req.params.id);
         if (!slot) return res.status(404).json({ message: 'Slot not found.' });
         await slot.deleteOne();
@@ -63,6 +84,12 @@ router.delete('/slots/:id', async (req, res) => {
 // PATCH /api/admin/slots/:id  – update slot status
 router.patch('/slots/:id', async (req, res) => {
     try {
+        if (req.demoMode) {
+            const result = demoStore.updateSlotStatus(req.params.id, req.body.status);
+            if (result.code !== 200) return res.status(result.code).json({ message: result.message });
+            return res.json(result.slot);
+        }
+
         const slot = await ParkingSlot.findByIdAndUpdate(
             req.params.id,
             { status: req.body.status },
@@ -78,6 +105,11 @@ router.patch('/slots/:id', async (req, res) => {
 // DELETE /api/admin/users/:id
 router.delete('/users/:id', async (req, res) => {
     try {
+        if (req.demoMode) {
+            const result = demoStore.removeUser(req.params.id);
+            return res.status(result.code).json({ message: result.message });
+        }
+
         const user = await User.findById(req.params.id);
         if (!user) return res.status(404).json({ message: 'User not found.' });
         if (user.role === 'admin') return res.status(400).json({ message: 'Cannot delete admin accounts.' });
@@ -91,6 +123,10 @@ router.delete('/users/:id', async (req, res) => {
 // GET /api/admin/slots  – all slots
 router.get('/slots', async (req, res) => {
     try {
+        if (req.demoMode) {
+            return res.json(demoStore.listSlots());
+        }
+
         const slots = await ParkingSlot.find().populate('area', 'name type').sort('slotNumber');
         res.json(slots);
     } catch (err) {

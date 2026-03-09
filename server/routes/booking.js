@@ -3,12 +3,25 @@ const Booking = require('../models/Booking');
 const ParkingSlot = require('../models/ParkingSlot');
 const ParkingArea = require('../models/ParkingArea');
 const protect = require('../middleware/authMiddleware');
+const demoStore = require('../lib/demoStore');
 const router = express.Router();
 
 // POST /api/booking  – create a booking
 router.post('/', protect, async (req, res) => {
     try {
         const { slotId, areaId, vehicleNumber, startTime, endTime } = req.body;
+
+        if (req.demoMode) {
+            const created = demoStore.createBooking({
+                userId: req.user._id,
+                slotId,
+                areaId,
+                vehicleNumber,
+                startTime,
+                endTime,
+            });
+            return res.status(201).json(created);
+        }
 
         const slot = await ParkingSlot.findById(slotId);
         if (!slot) return res.status(404).json({ message: 'Slot not found.' });
@@ -34,13 +47,18 @@ router.post('/', protect, async (req, res) => {
 
         res.status(201).json(populated);
     } catch (err) {
-        res.status(500).json({ message: err.message });
+        const code = /not found|not available|does not belong/i.test(err.message) ? 400 : 500;
+        res.status(code).json({ message: err.message });
     }
 });
 
 // GET /api/booking/mine
 router.get('/mine', protect, async (req, res) => {
     try {
+        if (req.demoMode) {
+            return res.json(demoStore.listMyBookings(req.user._id));
+        }
+
         const bookings = await Booking.find({ user: req.user._id })
             .populate('slot', 'slotNumber')
             .populate('area', 'name type')
@@ -54,6 +72,10 @@ router.get('/mine', protect, async (req, res) => {
 // GET /api/booking/stats
 router.get('/stats', async (req, res) => {
     try {
+        if (req.demoMode) {
+            return res.json(demoStore.stats());
+        }
+
         const totalSlots = await ParkingSlot.countDocuments();
         const availableSlots = await ParkingSlot.countDocuments({ status: 'available' });
         const occupiedSlots = await ParkingSlot.countDocuments({ status: 'occupied' });
@@ -83,6 +105,11 @@ router.get('/stats', async (req, res) => {
 // DELETE /api/booking/:id  – cancel a booking
 router.delete('/:id', protect, async (req, res) => {
     try {
+        if (req.demoMode) {
+            const result = demoStore.cancelBooking(req.params.id, req.user);
+            return res.status(result.code).json({ message: result.message });
+        }
+
         const booking = await Booking.findById(req.params.id);
         if (!booking) return res.status(404).json({ message: 'Booking not found.' });
         if (booking.user.toString() !== req.user._id.toString() && req.user.role !== 'admin')

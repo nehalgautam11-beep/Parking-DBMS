@@ -1,6 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const demoStore = require('../lib/demoStore');
 const router = express.Router();
 
 const generateToken = (id) =>
@@ -10,6 +11,13 @@ const generateToken = (id) =>
 router.post('/register', async (req, res) => {
     try {
         const { name, email, mobile, vehicleNumber, password, role } = req.body;
+
+        if (req.demoMode) {
+            const created = demoStore.createUser({ name, email, mobile, vehicleNumber, password, role: role || 'student' });
+            if (!created) return res.status(400).json({ message: 'Email already registered. Please login.' });
+            return res.status(201).json({ ...created, token: generateToken(created._id) });
+        }
+
         const existing = await User.findOne({ email });
         if (existing) return res.status(400).json({ message: 'Email already registered. Please login.' });
 
@@ -32,6 +40,23 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
+
+        if (req.demoMode) {
+            const user = demoStore.findUserByEmail(email);
+            if (!user || user.password !== password) {
+                return res.status(401).json({ message: 'Invalid email or password.' });
+            }
+            return res.json({
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                mobile: user.mobile,
+                vehicleNumber: user.vehicleNumber,
+                role: user.role,
+                token: generateToken(user._id),
+            });
+        }
+
         const user = await User.findOne({ email });
         if (!user || !(await user.matchPassword(password)))
             return res.status(401).json({ message: 'Invalid email or password.' });

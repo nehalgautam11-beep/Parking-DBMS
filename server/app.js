@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
+const demoStore = require('./lib/demoStore');
 
 const app = express();
 
@@ -27,8 +28,14 @@ app.use(express.json());
 app.use(async (req, res, next) => {
     try {
         await connectDB();
+        req.dbConnected = true;
+        req.demoMode = false;
         next();
     } catch (error) {
+        req.dbConnected = false;
+        req.dbError = error.message;
+        req.demoMode = demoStore.isEnabled();
+        if (req.demoMode) return next();
         res.status(500).json({ message: `Database connection failed: ${error.message}` });
     }
 });
