@@ -35,11 +35,13 @@ const connectDB = async () => {
     return cached.conn;
   }
 
-  if (!process.env.MONGO_URI) {
-    throw new Error('MONGO_URI is not set');
+  const configuredUri = String(process.env.MONGO_URI || process.env.MONGODB_URI || '').trim();
+  if (!configuredUri) {
+    throw new Error('MONGO_URI (or MONGODB_URI) is not set');
   }
 
-  const normalizedUri = normalizeMongoUri(process.env.MONGO_URI);
+  const unquotedUri = configuredUri.replace(/^['"]+|['"]+$/g, '');
+  const normalizedUri = normalizeMongoUri(unquotedUri);
   if (!normalizedUri) {
     throw new Error('MONGO_URI is empty');
   }
