@@ -6,6 +6,17 @@ const demoStore = require('./lib/demoStore');
 
 const app = express();
 
+const mongoConfigMeta = () => {
+    const raw = String(process.env.MONGO_URI || process.env.MONGODB_URI || '').trim().replace(/^['"]+|['"]+$/g, '');
+    const host = raw.match(/@([^/?]+)/)?.[1] || null;
+    const dbName = raw.match(/@[^/]+\/([^?]+)/)?.[1] || null;
+    return {
+        mongoConfigured: Boolean(raw),
+        mongoHost: host,
+        mongoDbName: dbName,
+    };
+};
+
 const allowedOrigins = [
     'http://localhost:5173',
     'http://localhost:3000',
@@ -45,6 +56,24 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/parking', require('./routes/parking'));
 app.use('/api/booking', require('./routes/booking'));
 app.use('/api/admin', require('./routes/admin'));
+
+// Runtime diagnostics (no secrets exposed)
+app.get('/api/_diag', (req, res) => {
+    res.json({
+        ok: true,
+        dbConnected: Boolean(req.dbConnected),
+        demoMode: Boolean(req.demoMode),
+        dbError: req.dbError || null,
+        env: {
+            hasMONGO_URI: Boolean(process.env.MONGO_URI),
+            hasMONGODB_URI: Boolean(process.env.MONGODB_URI),
+            nodeEnv: process.env.NODE_ENV || null,
+            vercelEnv: process.env.VERCEL_ENV || null,
+            commit: process.env.VERCEL_GIT_COMMIT_SHA || null,
+        },
+        mongo: mongoConfigMeta(),
+    });
+});
 
 // Health check
 app.get('/', (req, res) => res.json({ message: 'Bharati Vidyapeeth Smart Parking API is running.' }));
