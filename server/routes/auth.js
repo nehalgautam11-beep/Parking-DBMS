@@ -32,6 +32,16 @@ router.post('/register', async (req, res) => {
             token: generateToken(user._id),
         });
     } catch (err) {
+        if (err?.code === 11000) {
+            return res.status(400).json({ message: 'Email already registered. Please login.' });
+        }
+        if (err?.name === 'ValidationError') {
+            const first = Object.values(err.errors || {})[0];
+            return res.status(400).json({ message: first?.message || 'Invalid registration data.' });
+        }
+        if (String(err?.message || '').toLowerCase().includes('not authorized')) {
+            return res.status(500).json({ message: 'Database user has no write access. Grant readWrite on bvp_parking.' });
+        }
         res.status(500).json({ message: err.message });
     }
 });
